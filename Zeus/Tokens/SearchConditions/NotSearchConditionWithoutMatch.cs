@@ -1,7 +1,7 @@
 ﻿using Zeus.Tokens.Predicates;
 using System.Text;
 
-namespace Zeus.Tokens {
+namespace Zeus.Tokens.SearchConditions {
 
   class NotSearchConditionWithoutMatch : SearchConditionWithoutMatch {
 

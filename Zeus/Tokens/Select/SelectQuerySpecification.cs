@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Zeus.Tokens.SearchConditions;
+using System.Collections.Generic;
+using Zeus.Tokens.Expressions;
 using System.Text;
 
 namespace Zeus.Tokens.Select {

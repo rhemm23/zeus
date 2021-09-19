@@ -1,9 +1,9 @@
 ﻿using System.Text;
 using System;
 
-namespace Zeus.Tokens {
+namespace Zeus.Tokens.SearchConditions {
 
-  class StringExpression : IWriteSql {
+  class GraphSearchPattern : IWriteSql {
 
     public void WriteSql(StringBuilder sql) {
       throw new NotImplementedException();

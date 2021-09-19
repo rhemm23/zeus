@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Zeus.Tokens.SearchConditions;
+using System.Collections.Generic;
+using Zeus.Tokens.Expressions;
 using Zeus.Tokens.Select;
 using Zeus.Tokens;
 using System.Text;
@@ -9,11 +11,9 @@ namespace Zeus.QueryBuilders {
   class SelectQueryBuilder : QueryBuilder {
 
     private SelectQuerySpecification _selectQuerySpecification;
-    private Type _tableType;
 
-    public SelectQueryBuilder(Type tableType) {
+    public SelectQueryBuilder(Type primaryTableType) : base(primaryTableType) {
       this._selectQuerySpecification = new SelectQuerySpecification();
-      this._tableType = tableType;
     }
 
     public SelectQueryBuilder Top(Expression topExpression) {
@@ -39,7 +39,7 @@ namespace Zeus.QueryBuilders {
     public override string GetSql() {
       if (this._selectQuerySpecification.SelectItems == null) {
         this._selectQuerySpecification.SelectItems = new List<SelectItem>() {
-          new SelectAll(this.GetTableAlias(this._tableType))
+          new SelectAll(this.GetTableAlias(this.PrimaryTableType))
         };
       }
       SelectStatement selectStatement = new SelectStatement(

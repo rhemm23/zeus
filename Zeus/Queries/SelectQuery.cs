@@ -19,7 +19,7 @@ namespace Zeus.Queries {
     }
 
     public SelectQuery<T> Top(int count) {
-      Tokens.ParameterExpression topParameterExpression = this._selectQueryBuilder.AddParameter(count);
+      Tokens.Expressions.ParameterExpression topParameterExpression = this._selectQueryBuilder.AddParameter(count);
       this._selectQueryBuilder.Top(topParameterExpression);
       return this;
     }

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Zeus.Tokens.Expressions;
+using System.Text;
 
 namespace Zeus.Tokens.Predicates {
 

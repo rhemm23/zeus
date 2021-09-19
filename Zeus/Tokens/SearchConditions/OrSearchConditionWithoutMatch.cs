@@ -1,11 +1,11 @@
 ﻿using Zeus.Tokens.Predicates;
 using System.Text;
 
-namespace Zeus.Tokens {
+namespace Zeus.Tokens.SearchConditions {
 
-  class AndSearchConditionWithoutMatch : SearchConditionWithoutMatch {
+  class OrSearchConditionWithoutMatch : SearchConditionWithoutMatch {
 
-    private enum BType { 
+    private enum BType {
       SearchConditionWithoutMatch,
       Predicate
     }
@@ -15,29 +15,29 @@ namespace Zeus.Tokens {
 
     private BType _bType;
 
-    public AndSearchConditionWithoutMatch(SearchConditionWithoutMatch searchConditionWithoutMatchA, SearchConditionWithoutMatch searchConditionWithoutMatchB) : base(searchConditionWithoutMatchA) {
+    public OrSearchConditionWithoutMatch(SearchConditionWithoutMatch searchConditionWithoutMatchA, SearchConditionWithoutMatch searchConditionWithoutMatchB) : base(searchConditionWithoutMatchA) {
       this._searchConditionWithoutMatchB = searchConditionWithoutMatchB;
       this._bType = BType.SearchConditionWithoutMatch;
     }
 
-    public AndSearchConditionWithoutMatch(SearchConditionWithoutMatch searchConditionWithoutMatchA, Predicate predicateB) : base(searchConditionWithoutMatchA) {
+    public OrSearchConditionWithoutMatch(SearchConditionWithoutMatch searchConditionWithoutMatchA, Predicate predicateB) : base(searchConditionWithoutMatchA) {
       this._predicateB = predicateB;
       this._bType = BType.Predicate;
     }
 
-    public AndSearchConditionWithoutMatch(Predicate predicateA, SearchConditionWithoutMatch searchConditionWithoutMatchB) : base(predicateA) {
+    public OrSearchConditionWithoutMatch(Predicate predicateA, SearchConditionWithoutMatch searchConditionWithoutMatchB) : base(predicateA) {
       this._searchConditionWithoutMatchB = searchConditionWithoutMatchB;
       this._bType = BType.SearchConditionWithoutMatch;
     }
 
-    public AndSearchConditionWithoutMatch(Predicate predicateA, Predicate predicateB) : base(predicateA) {
+    public OrSearchConditionWithoutMatch(Predicate predicateA, Predicate predicateB) : base(predicateA) {
       this._predicateB = predicateB;
       this._bType = BType.Predicate;
     }
 
     public override void WriteSql(StringBuilder sql) {
       base.WriteSql(sql);
-      sql.Append(" AND ");
+      sql.Append(" OR ");
       switch (this._bType) {
         case BType.SearchConditionWithoutMatch:
           this._searchConditionWithoutMatchB.WriteSql(sql);

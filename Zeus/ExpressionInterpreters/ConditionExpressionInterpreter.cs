@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using Zeus.Tokens.SearchConditions;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using Zeus.Tokens.Predicates;
 using Zeus.QueryBuilders;
 using System.Reflection;
 using Zeus.Exceptions;
-using Zeus.Tokens;
 using System;
 
 namespace Zeus.ExpressionInterpreters {
@@ -19,16 +19,16 @@ namespace Zeus.ExpressionInterpreters {
       this._condition = condition;
     }
 
-    private Tokens.Expression ParseConstantExpression(ConstantExpression constantExpression) {
+    private Tokens.Expressions.Expression ParseConstantExpression(ConstantExpression constantExpression) {
       return this._queryBuilder.AddParameter(constantExpression.Value);
     }
 
-    private Tokens.Expression ParseMemberAccessExpression(MemberExpression memberExpression) {
-      if (memberExpression.Expression is System.Linq.Expressions.ParameterExpression && memberExpression.Member is PropertyInfo propertyInfo) {
+    private Tokens.Expressions.Expression ParseMemberAccessExpression(MemberExpression memberExpression) {
+      if (memberExpression.Expression is ParameterExpression && memberExpression.Member is PropertyInfo propertyInfo) {
         TableDefinition tableDefinition = TableDefinitionCache.GetTableDefinition(typeof(T));
         if (tableDefinition.ColumnDefinitionsByPropertyInfo.TryGetValue(propertyInfo, out ColumnDefinition columnDefinition)) {
           string tableAlias = this._queryBuilder.GetTableAlias(typeof(T));
-          return new ColumnExpression(tableAlias, columnDefinition.Name);
+          return new Tokens.Expressions.ColumnExpression(tableAlias, columnDefinition.Name);
         }
       } else {
         MemberExpression currentExpression = memberExpression;
@@ -71,7 +71,7 @@ namespace Zeus.ExpressionInterpreters {
       }
     }
 
-    private Tokens.Expression ParseExpression(System.Linq.Expressions.Expression expression) {
+    private Tokens.Expressions.Expression ParseExpression(System.Linq.Expressions.Expression expression) {
       switch (expression) {
         case MemberExpression memberExpression:
           return this.ParseMemberAccessExpression(memberExpression);
@@ -84,7 +84,7 @@ namespace Zeus.ExpressionInterpreters {
       }
     }
 
-    private bool IsExpressionConstantNull(System.Linq.Expressions.Expression expression) {
+    private bool IsExpressionConstantNull(Expression expression) {
       switch (expression) {
         case ConstantExpression constantExpression:
           return constantExpression.Value == null;
@@ -145,7 +145,7 @@ namespace Zeus.ExpressionInterpreters {
         default:
 
           bool isNullPredicate = false;
-          Tokens.Expression nullPredicateExpression = null;
+          Tokens.Expressions.Expression nullPredicateExpression = null;
 
           if (this.IsExpressionConstantNull(binaryExpression.Left)) {
             isNullPredicate = true;
@@ -171,8 +171,8 @@ namespace Zeus.ExpressionInterpreters {
             }
           }
 
-          Tokens.Expression leftExpression = this.ParseExpression(binaryExpression.Left);
-          Tokens.Expression rightExpression = this.ParseExpression(binaryExpression.Right);
+          Tokens.Expressions.Expression leftExpression = this.ParseExpression(binaryExpression.Left);
+          Tokens.Expressions.Expression rightExpression = this.ParseExpression(binaryExpression.Right);
 
           return new SearchConditionWithoutMatch(
             new ComparisonPredicate(

@@ -1,20 +1,24 @@
 ﻿using System.Collections.Generic;
+using Zeus.Tokens.Expressions;
 using System.Data.SqlClient;
-using Zeus.Tokens;
 using System;
 
 namespace Zeus.QueryBuilders {
 
   abstract class QueryBuilder {
 
+    public Type PrimaryTableType { get; }
+
     private Dictionary<string, object> _parameters;
     private Dictionary<Type, string> _tableAliases;
     private int _parameterCount;
     private int _tableCount;
 
-    public QueryBuilder() {
+    public QueryBuilder(Type primaryTableType) {
       this._tableAliases = new Dictionary<Type, string>();
       this._parameters = new Dictionary<string, object>();
+
+      this.PrimaryTableType = primaryTableType;
       this._parameterCount = 0;
       this._tableCount = 0;
     }

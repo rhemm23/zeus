@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Zeus.Tokens {
+namespace Zeus.Tokens.Expressions {
 
   class ColumnExpression : Expression {
 
