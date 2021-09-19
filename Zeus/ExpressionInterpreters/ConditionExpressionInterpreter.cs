@@ -31,10 +31,11 @@ namespace Zeus.ExpressionInterpreters {
           return new ColumnExpression(tableAlias, columnDefinition.Name);
         }
       } else {
-        Stack<MemberInfo> memberInfos = new Stack<MemberInfo>();
         MemberExpression currentExpression = memberExpression;
+        Stack<MemberInfo> memberInfos = new Stack<MemberInfo>();
+        memberInfos.Push(currentExpression.Member);
         while (currentExpression.Expression is MemberExpression nextMemberExpression) {
-          memberInfos.Push(currentExpression.Member);
+          memberInfos.Push(nextMemberExpression.Member);
           currentExpression = nextMemberExpression;
         }
         if (currentExpression.Expression is ConstantExpression constantExpression) {
@@ -90,8 +91,9 @@ namespace Zeus.ExpressionInterpreters {
 
         case MemberExpression memberExpression:
           Stack<MemberInfo> memberInfos = new Stack<MemberInfo>();
+          memberInfos.Push(memberExpression.Member);
           while (memberExpression.Expression is MemberExpression nextMemberExpression) {
-            memberInfos.Push(memberExpression.Member);
+            memberInfos.Push(nextMemberExpression.Member);
             memberExpression = nextMemberExpression;
           }
           if (memberExpression.Expression is ConstantExpression rootConstantExpression) {

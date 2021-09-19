@@ -12,14 +12,28 @@ namespace ZeusTest {
       Database db = new Database(DB_CONN_STR);
       var users = db.Select<User>().Where(x => x.FirstName == null && x.ID == 1).First();
 
+      Test test = new Test();
+      test.Data = new Internal();
+      test.Data.Data = "doe";
+
       Stopwatch sw = Stopwatch.StartNew();
-      var users2 = db.Select<User>().Where(x => x.LastName == "test" && x.ID == 4).First();
+      var users2 = db.Select<User>().Where(x => x.LastName == test.Data.Data && x.ID == 1).First();
       sw.Stop();
 
       Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms");
 
       Console.ReadKey();
     }
+  }
+
+  class Test {
+    
+    public Internal Data { get; set; }
+  }
+
+  class Internal { 
+    
+    public string Data { get; set; }
   }
 
   [Table(Name = "users")]
