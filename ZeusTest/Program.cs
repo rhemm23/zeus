@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System;
 using Zeus;
+using System.Threading.Tasks;
 
 namespace ZeusTest {
 
@@ -11,10 +12,14 @@ namespace ZeusTest {
     static void Main() {
       Database db = new Database(DB_CONN_STR);
 
-      // Load caches
-      foreach (User user in db.Select<User>(user => user.ID, user => user.LastName).All()) {
-        Console.WriteLine(user);
-      }
+      var task = Task.Run(async () => {
+        var users = await db.Select<User>(user => user.ID, user => user.LastName).AllAsync();
+        foreach (User user in users) {
+          Console.WriteLine(user);
+        }
+      });
+
+      Task.WaitAll(task);
 
       // Now test for speed
       Stopwatch sw = Stopwatch.StartNew();

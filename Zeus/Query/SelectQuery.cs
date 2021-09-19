@@ -16,22 +16,29 @@ namespace Zeus {
       this._columns = columns;
     }
 
-    public IEnumerable<T> All() {
+    public List<T> All() {
       ObjectReader objectReader = new ObjectReader(this.GetDataReader(), typeof(T));
+      List<T> results = new List<T>();
+
       foreach (object obj in objectReader.ReadAllObjects()) {
-        yield return (T)obj;
+        results.Add((T)obj);
       }
+
       this._connection.Close();
+      return results;
     }
 
     public async Task<IEnumerable<T>> AllAsync() {
       SqlDataReader dataReader = await this.GetDataReaderAsync();
       ObjectReader objectReader = new ObjectReader(dataReader, typeof(T));
+      List<T> results = new List<T>();
 
-      IEnumerable<T> objects = objectReader.ReadAllObjects().Select(obj => (T)obj);
+      foreach (object obj in objectReader.ReadAllObjects()) {
+        results.Add((T)obj);
+      }
+
       this._connection.Close();
-
-      return objects;
+      return results;
     }
 
     private SqlDataReader GetDataReader() {
