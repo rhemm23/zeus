@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Data;
 
 namespace Zeus {
 
@@ -6,10 +7,13 @@ namespace Zeus {
 
     public PropertyInfo PropertyInfo { get; }
 
+    public SqlDbType DbType { get; }
+
     public string Name { get; }
 
-    public ColumnDefinition(string name, PropertyInfo propertyInfo) {
+    public ColumnDefinition(string name, SqlDbType dbType, PropertyInfo propertyInfo) {
       this.PropertyInfo = propertyInfo;
+      this.DbType = dbType;
       this.Name = name;
     }
   }
