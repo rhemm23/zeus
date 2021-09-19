@@ -3,11 +3,10 @@ using System.Threading.Tasks;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
-using Zeus.Tokens;
 
-namespace Zeus {
+namespace Zeus.Querys {
 
-  public class SelectQuery<T> : IWriteSql {
+  class SelectQuery<T> : Query {
 
     private IEnumerable<string> _columns;
     private SqlConnection _connection;
