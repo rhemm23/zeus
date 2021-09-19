@@ -1,26 +1,29 @@
 ﻿using System.Collections.Generic;
-using System;
+using System.Data.SqlClient;
 
 namespace Zeus.Querys {
 
-  abstract class Query {
+  public abstract class Query<T> {
 
-    private Dictionary<Type, string> _tableAliases;
-    private int _tableCount;
+    private SqlConnection _connection;
 
-    public Query() {
-      this._tableAliases = new Dictionary<Type, string>();
-      this._tableCount = 0;
+    public Query(SqlConnection connection) {
+      this._connection = connection;
     }
 
-    public string GetTableAlias(Type type) {
-      if (this._tableAliases.TryGetValue(type, out string alias)) {
-        return alias;
-      } else {
-        string newAlias = $"t_{this._tableCount++ :00}";
-        this._tableAliases.Add(type, newAlias);
-        return newAlias;
+    public abstract string GetSql();
+
+    public IEnumerable<T> All() {
+      ObjectReader objectReader = new ObjectReader(this.GetDataReader(), typeof(T));
+      foreach (object obj in objectReader.ReadAllObjects()) {
+        yield return (T)obj;
       }
+      this._connection.Close();
+    }
+
+    private SqlDataReader GetDataReader() {
+      SqlCommand command = new SqlCommand(this.GetSql(), this._connection);
+      return command.ExecuteReader();
     }
   }
 }

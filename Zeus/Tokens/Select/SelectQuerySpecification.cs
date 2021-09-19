@@ -5,24 +5,26 @@ namespace Zeus.Tokens.Select {
 
   class SelectQuerySpecification : IWriteSql {
 
-    private List<SelectItem> _selectItems;
-    private TableSource _tableSource;
+    public List<SelectItem> SelectItems { get; set; }
 
-    public SelectQuerySpecification(TableSource tableSource, List<SelectItem> selectItems) {
-      this._selectItems = selectItems;
-      this._tableSource = tableSource;
-    }
+    public TableSource TableSource { get; set; }
+
+    public SearchCondition Where { get; set; }
 
     public void WriteSql(StringBuilder sql) {
       sql.Append("SELECT ");
-      for (int i = 0; i < this._selectItems.Count; i++) {
+      for (int i = 0; i < this.SelectItems.Count; i++) {
         if (i > 0) {
           sql.Append(", ");
         }
-        this._selectItems[i].WriteSql(sql);
+        this.SelectItems[i].WriteSql(sql);
       }
       sql.Append(" FROM ");
-      this._tableSource.WriteSql(sql);
+      this.TableSource.WriteSql(sql);
+      if (this.Where != null) {
+        sql.Append(" WHERE ");
+        this.Where.WriteSql(sql);
+      }
     }
   }
 }

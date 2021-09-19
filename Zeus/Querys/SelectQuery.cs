@@ -1,81 +1,54 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Zeus.ExpressionInterpreters;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
+using Zeus.QueryBuilders;
+using Zeus.Tokens.Select;
+using Zeus.Tokens;
+using System;
 
 namespace Zeus.Querys {
 
-  class SelectQuery<T> : Query {
+  public class SelectQuery<T> : Query<T> {
 
-    private IEnumerable<string> _columns;
-    private SqlConnection _connection;
+    private SelectQueryBuilder _selectQueryBuilder;
 
-    public SelectQuery(SqlConnection connection, IEnumerable<string> columns) {
-      this._connection = connection;
-      this._columns = columns;
+    public SelectQuery(SqlConnection connection, IEnumerable<Expression<Func<T, object>>> selectStatements) : base(connection) {
+      this._selectQueryBuilder = InitializeSelectQueryBuilder(selectStatements);
     }
 
-    public List<T> All() {
-      ObjectReader objectReader = new ObjectReader(this.GetDataReader(), typeof(T));
-      List<T> results = new List<T>();
-
-      foreach (object obj in objectReader.ReadAllObjects()) {
-        results.Add((T)obj);
-      }
-
-      this._connection.Close();
-      return results;
+    public SelectQuery<T> Where(Expression<Predicate<T>> condition) {
+      ConditionExpressionInterpreter<T> conditionExpressionInterpreter = new ConditionExpressionInterpreter<T>(condition);
+      this._selectQueryBuilder.Where(conditionExpressionInterpreter.GetSearchCondition());
+      return this;
     }
 
-    public async Task<IEnumerable<T>> AllAsync() {
-      SqlDataReader dataReader = await this.GetDataReaderAsync();
-      ObjectReader objectReader = new ObjectReader(dataReader, typeof(T));
-      List<T> results = new List<T>();
-
-      foreach (object obj in objectReader.ReadAllObjects()) {
-        results.Add((T)obj);
-      }
-
-      this._connection.Close();
-      return results;
+    public override string GetSql() {
+      return this._selectQueryBuilder.GetSql();
     }
 
-    private SqlDataReader GetDataReader() {
-      SqlCommand command = new SqlCommand(this.GetQuerySql(), this._connection);
-      return command.ExecuteReader();
-    }
-
-    private Task<SqlDataReader> GetDataReaderAsync() {
-      SqlCommand command = new SqlCommand(this.GetQuerySql(), this._connection);
-      return command.ExecuteReaderAsync();
-    }
-
-    private string GetQuerySql() {
-      StringBuilder sb = new StringBuilder();
-      this.WriteSql(sb);
-      return sb.ToString();
-    }
-
-    public void WriteSql(StringBuilder sb) {
+    private SelectQueryBuilder InitializeSelectQueryBuilder(IEnumerable<Expression<Func<T, object>>> selectStatements) {
       TableDefinition tableDefinition = TableDefinitionCache.GetTableDefinition(typeof(T));
+      SelectQueryBuilder selectQueryBuilder = new SelectQueryBuilder();
 
-      sb.Append("SELECT ");
+      string tableAlias = selectQueryBuilder.GetTableAlias(typeof(T));
 
-      if (this._columns.Count() > 0) {
-        bool first = true;
-        foreach (string column in this._columns) {
-          if (!first) {
-            sb.Append(", ");
-          } else {
-            first = false;
-          }
-          sb.Append(column);
-        }
-      } else {
-        sb.Append("*");
+      selectQueryBuilder.From(
+        new TableSource(tableDefinition.Name, tableAlias)
+      );
+      List<SelectItem> columnSelects = new List<SelectItem>();
+      foreach (Expression<Func<T, object>> selectStatement in selectStatements) {
+        columnSelects.Add(
+          new SelectColumn(tableAlias, this.GetColumnName(selectStatement))
+        );
       }
-      sb.Append($" FROM {tableDefinition.Name};");
+      selectQueryBuilder.Select(columnSelects);
+      return selectQueryBuilder;
+    }
+
+    private string GetColumnName(Expression<Func<T, object>> selectExpression) {
+      SelectExpressionInterpreter<T> expressionInterpreter = new SelectExpressionInterpreter<T>(selectExpression);
+      return expressionInterpreter.GetColumnName();
     }
   }
 }
