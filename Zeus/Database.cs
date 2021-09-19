@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Data.SqlClient;
-using Zeus.Querys;
+using Zeus.Queries;
 using System;
 
 namespace Zeus {

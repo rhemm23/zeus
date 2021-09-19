@@ -8,7 +8,7 @@ using Zeus.Tokens;
 using System;
 using System.Linq;
 
-namespace Zeus.Querys {
+namespace Zeus.Queries {
 
   public class SelectQuery<T> : Query<T> {
 

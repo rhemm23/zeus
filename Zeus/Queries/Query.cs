@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Data.SqlClient;
 
-namespace Zeus.Querys {
+namespace Zeus.Queries {
 
   public abstract class Query<T> {
 
