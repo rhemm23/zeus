@@ -1,8 +1,9 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using System;
 using Zeus;
 
 namespace ZeusTest {
+
   class Program {
 
     private static readonly string DB_CONN_STR = "Data Source=DESKTOP;Initial Catalog=zeustest;User Id=admin;Password=admin;";

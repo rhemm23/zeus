@@ -20,6 +20,7 @@ namespace Zeus {
       foreach (object obj in objectReader.ReadAllObjects()) {
         yield return (T)obj;
       }
+      this._connection.Close();
     }
 
     private SqlDataReader GetDataReader() {
