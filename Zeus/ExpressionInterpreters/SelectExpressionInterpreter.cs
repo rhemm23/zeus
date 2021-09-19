@@ -17,7 +17,11 @@ namespace Zeus {
     }
 
     public SelectItem GetSelectItem() {
-      if (this._selectExpression.Body is MemberExpression memberExpression && memberExpression.Expression is ParameterExpression && memberExpression.Member is PropertyInfo propertyInfo) {
+      Expression currentExpression = this._selectExpression.Body;
+      while (currentExpression is UnaryExpression unaryExpression && unaryExpression.NodeType == ExpressionType.Convert) {
+        currentExpression = unaryExpression.Operand;
+      }
+      if (currentExpression is MemberExpression memberExpression && memberExpression.Expression is ParameterExpression && memberExpression.Member is PropertyInfo propertyInfo) {
         TableDefinition tableDefinition = TableDefinitionCache.GetTableDefinition(typeof(T));
         if (tableDefinition.ColumnDefinitionsByPropertyInfo.TryGetValue(propertyInfo, out ColumnDefinition columnDefinition)) {
           return new SelectColumn(this._queryBuilder.GetTableAlias(typeof(T)), columnDefinition.Name);

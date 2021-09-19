@@ -142,7 +142,7 @@ namespace Zeus.ExpressionInterpreters {
     }
 
     public SearchCondition GetSearchCondition() {
-      SearchConditionWithoutMatch searchConditionWithoutMatch = this.ParseSearchConditionWithoutMatch(this._condition);
+      SearchConditionWithoutMatch searchConditionWithoutMatch = this.ParseSearchConditionWithoutMatch(this._condition.Body);
       return new SearchCondition(searchConditionWithoutMatch);
     }
   }

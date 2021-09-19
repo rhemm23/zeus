@@ -36,16 +36,12 @@ namespace Zeus.Querys {
 
       List<SelectItem> columnSelects = new List<SelectItem>();
       foreach (Expression<Func<T, object>> selectStatement in selectStatements) {
-        columnSelects.Add(this.ParseSelectExpression(selectStatement));
+        SelectExpressionInterpreter<T> expressionInterpreter = new SelectExpressionInterpreter<T>(selectQueryBuilder, selectStatement);
+        columnSelects.Add(expressionInterpreter.GetSelectItem());
       }
 
       selectQueryBuilder.Select(columnSelects);
       return selectQueryBuilder;
-    }
-
-    private SelectItem ParseSelectExpression(Expression<Func<T, object>> selectExpression) {
-      SelectExpressionInterpreter<T> expressionInterpreter = new SelectExpressionInterpreter<T>(this._selectQueryBuilder, selectExpression);
-      return expressionInterpreter.GetSelectItem();
     }
   }
 }

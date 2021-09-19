@@ -23,6 +23,7 @@ namespace Zeus.Querys {
 
     private SqlDataReader GetDataReader() {
       SqlCommand command = this.GetSqlCommand();
+      command.Connection = this._connection;
       return command.ExecuteReader();
     }
   }

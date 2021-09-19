@@ -1,7 +1,5 @@
-﻿using System.Diagnostics;
-using System;
+﻿using System;
 using Zeus;
-using System.Threading.Tasks;
 
 namespace ZeusTest {
 
@@ -12,22 +10,11 @@ namespace ZeusTest {
     static void Main() {
       Database db = new Database(DB_CONN_STR);
 
-      var task = Task.Run(async () => {
-        var users = await db.Select<User>(user => user.ID, user => user.LastName).AllAsync();
-        foreach (User user in users) {
-          Console.WriteLine(user);
-        }
-      });
+      var users = db.Select<User>(user => user.ID, user => user.FirstName).Where(x => x.FirstName == "john" && x.ID == 1).All();
 
-      Task.WaitAll(task);
-
-      // Now test for speed
-      Stopwatch sw = Stopwatch.StartNew();
-      var users = db.Select<User>(user => user.ID, user => user.FirstName).All();
-      sw.Stop();
-
-      Console.WriteLine(sw.ElapsedMilliseconds);
-
+      foreach (var user in users) {
+        Console.WriteLine(user.ID);
+      }
       Console.ReadKey();
     }
   }
