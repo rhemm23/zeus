@@ -11,7 +11,7 @@ namespace Zeus.Querys {
       this._connection = connection;
     }
 
-    public abstract string GetSql();
+    public abstract SqlCommand GetSqlCommand();
 
     public IEnumerable<T> All() {
       ObjectReader objectReader = new ObjectReader(this.GetDataReader(), typeof(T));
@@ -22,7 +22,7 @@ namespace Zeus.Querys {
     }
 
     private SqlDataReader GetDataReader() {
-      SqlCommand command = new SqlCommand(this.GetSql(), this._connection);
+      SqlCommand command = this.GetSqlCommand();
       return command.ExecuteReader();
     }
   }

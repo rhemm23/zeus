@@ -1,35 +1,29 @@
 ﻿using System.Linq.Expressions;
+using Zeus.QueryBuilders;
+using Zeus.Tokens.Select;
 using System.Reflection;
 using System;
 
 namespace Zeus {
 
-  class SelectExpressionInterpreter<T> : ExpressionVisitor {
+  class SelectExpressionInterpreter<T> {
 
     private Expression<Func<T, object>> _selectExpression;
-    private string _columnName;
+    private QueryBuilder _queryBuilder;
 
-    public SelectExpressionInterpreter(Expression<Func<T, object>> selectExpression) {
+    public SelectExpressionInterpreter(QueryBuilder queryBuilder, Expression<Func<T, object>> selectExpression) {
       this._selectExpression = selectExpression;
+      this._queryBuilder = queryBuilder;
     }
 
-    protected override Expression VisitMember(MemberExpression node) {
-      if (node.Member.DeclaringType == typeof(T) && node.Member is PropertyInfo propertyInfo) {
+    public SelectItem GetSelectItem() {
+      if (this._selectExpression.Body is MemberExpression memberExpression && memberExpression.Expression is ParameterExpression && memberExpression.Member is PropertyInfo propertyInfo) {
         TableDefinition tableDefinition = TableDefinitionCache.GetTableDefinition(typeof(T));
         if (tableDefinition.ColumnDefinitionsByPropertyInfo.TryGetValue(propertyInfo, out ColumnDefinition columnDefinition)) {
-          this._columnName = columnDefinition.Name;
+          return new SelectColumn(this._queryBuilder.GetTableAlias(typeof(T)), columnDefinition.Name);
         }
       }
-      return base.VisitMember(node);
-    }
-
-    public string GetColumnName() {
-      this.Visit(this._selectExpression);
-      if (this._columnName == null) {
-        throw new InvalidSelectExpressionException(this._selectExpression);
-      } else {
-        return this._columnName;
-      }
+      throw new InvalidSelectExpressionException(this._selectExpression);
     }
   }
 }

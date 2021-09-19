@@ -11,12 +11,10 @@ namespace Zeus.ExpressionInterpreters {
 
   class ConditionExpressionInterpreter<T> {
 
-    private Stack<Tokens.Expression> _expressions;
     private Expression<Predicate<T>> _condition;
     private QueryBuilder _queryBuilder;
 
     public ConditionExpressionInterpreter(QueryBuilder queryBuilder, Expression<Predicate<T>> condition) {
-      this._expressions = new Stack<Tokens.Expression>();
       this._queryBuilder = queryBuilder;
       this._condition = condition;
     }
@@ -62,12 +60,27 @@ namespace Zeus.ExpressionInterpreters {
       throw new InvalidMemberAccessException();
     }
 
-    private Predicate ParsePredicate(System.Linq.Expressions.Expression expression) {
-      
+    private SearchConditionWithoutMatch ParseSearchConditionWithoutMatch(System.Linq.Expressions.Expression expression) {
+      switch (expression) {
+        case BinaryExpression binaryExpression:
+          return this.ParseBinaryExpression(binaryExpression);
+
+        default:
+          throw new InvalidConditionExpressionException();
+      }
     }
 
     private Tokens.Expression ParseExpression(System.Linq.Expressions.Expression expression) {
+      switch (expression) {
+        case MemberExpression memberExpression:
+          return this.ParseMemberAccessExpression(memberExpression);
 
+        case ConstantExpression constantExpression:
+          return this.ParseConstantExpression(constantExpression);
+
+        default:
+          throw new InvalidConditionExpressionException();
+      }
     }
 
     private SearchConditionWithoutMatch ParseBinaryExpression(BinaryExpression binaryExpression) {
@@ -75,16 +88,16 @@ namespace Zeus.ExpressionInterpreters {
         case ExpressionType.And:
         case ExpressionType.AndAlso:
 
-          Predicate leftAndPredicate = this.ParsePredicate(binaryExpression.Left);
-          Predicate rightAndPredicate = this.ParsePredicate(binaryExpression.Right);
+          SearchConditionWithoutMatch leftAndPredicate = this.ParseSearchConditionWithoutMatch(binaryExpression.Left);
+          SearchConditionWithoutMatch rightAndPredicate = this.ParseSearchConditionWithoutMatch(binaryExpression.Right);
 
           return new AndSearchConditionWithoutMatch(leftAndPredicate, rightAndPredicate);
 
         case ExpressionType.Or:
         case ExpressionType.OrElse:
 
-          Predicate leftOrPredicate = this.ParsePredicate(binaryExpression.Left);
-          Predicate rightOrPredicate = this.ParsePredicate(binaryExpression.Right);
+          SearchConditionWithoutMatch leftOrPredicate = this.ParseSearchConditionWithoutMatch(binaryExpression.Left);
+          SearchConditionWithoutMatch rightOrPredicate = this.ParseSearchConditionWithoutMatch(binaryExpression.Right);
 
           return new OrSearchConditionWithoutMatch(leftOrPredicate, rightOrPredicate);
 
@@ -128,31 +141,9 @@ namespace Zeus.ExpressionInterpreters {
       }
     }
 
-    protected override System.Linq.Expressions.Expression VisitBinary(BinaryExpression node) {
-
-      this.Visit(node.Left);
-      this.Visit(node.Right);
-
-      switch (node.NodeType) {
-        case ExpressionType.Equal:
-          this._expressions.Push(new ComparisonPredicate(Com))
-
-      }
-    }
-
     public SearchCondition GetSearchCondition() {
-
-      switch (this._condition.Body) {
-
-        case ConstantExpression constantExpression:
-
-          break;
-
-      }
-
-
-      this.Visit(this._condition);
-      throw new NotImplementedException();
+      SearchConditionWithoutMatch searchConditionWithoutMatch = this.ParseSearchConditionWithoutMatch(this._condition);
+      return new SearchCondition(searchConditionWithoutMatch);
     }
   }
 }

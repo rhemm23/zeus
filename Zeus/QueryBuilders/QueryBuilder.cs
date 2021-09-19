@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Data.SqlClient;
 using Zeus.Tokens;
 using System;
 
@@ -19,6 +20,14 @@ namespace Zeus.QueryBuilders {
     }
 
     public abstract string GetSql();
+
+    public SqlCommand GetSqlCommand() {
+      SqlCommand command = new SqlCommand(this.GetSql());
+      foreach (KeyValuePair<string, object> parameter in this._parameters) {
+        command.Parameters.AddWithValue(parameter.Key, parameter.Value);
+      }
+      return command;
+    }
 
     public ParameterExpression AddParameter(object value) {
       string parameterName = this.GetParameterName();

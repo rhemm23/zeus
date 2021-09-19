@@ -18,13 +18,13 @@ namespace Zeus.Querys {
     }
 
     public SelectQuery<T> Where(Expression<Predicate<T>> condition) {
-      ConditionExpressionInterpreter<T> conditionExpressionInterpreter = new ConditionExpressionInterpreter<T>(condition);
+      ConditionExpressionInterpreter<T> conditionExpressionInterpreter = new ConditionExpressionInterpreter<T>(this._selectQueryBuilder, condition);
       this._selectQueryBuilder.Where(conditionExpressionInterpreter.GetSearchCondition());
       return this;
     }
 
-    public override string GetSql() {
-      return this._selectQueryBuilder.GetSql();
+    public override SqlCommand GetSqlCommand() {
+      return this._selectQueryBuilder.GetSqlCommand();
     }
 
     private SelectQueryBuilder InitializeSelectQueryBuilder(IEnumerable<Expression<Func<T, object>>> selectStatements) {
@@ -32,23 +32,20 @@ namespace Zeus.Querys {
       SelectQueryBuilder selectQueryBuilder = new SelectQueryBuilder();
 
       string tableAlias = selectQueryBuilder.GetTableAlias(typeof(T));
+      selectQueryBuilder.From(new TableSource(tableDefinition.Name, tableAlias));
 
-      selectQueryBuilder.From(
-        new TableSource(tableDefinition.Name, tableAlias)
-      );
       List<SelectItem> columnSelects = new List<SelectItem>();
       foreach (Expression<Func<T, object>> selectStatement in selectStatements) {
-        columnSelects.Add(
-          new SelectColumn(tableAlias, this.GetColumnName(selectStatement))
-        );
+        columnSelects.Add(this.ParseSelectExpression(selectStatement));
       }
+
       selectQueryBuilder.Select(columnSelects);
       return selectQueryBuilder;
     }
 
-    private string GetColumnName(Expression<Func<T, object>> selectExpression) {
-      SelectExpressionInterpreter<T> expressionInterpreter = new SelectExpressionInterpreter<T>(selectExpression);
-      return expressionInterpreter.GetColumnName();
+    private SelectItem ParseSelectExpression(Expression<Func<T, object>> selectExpression) {
+      SelectExpressionInterpreter<T> expressionInterpreter = new SelectExpressionInterpreter<T>(this._selectQueryBuilder, selectExpression);
+      return expressionInterpreter.GetSelectItem();
     }
   }
 }
