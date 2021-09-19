@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
+using System;
 
 namespace Zeus.Tokens {
+
   class GraphSearchPattern : IWriteSql {
 
     public void WriteSql(StringBuilder sql) {
