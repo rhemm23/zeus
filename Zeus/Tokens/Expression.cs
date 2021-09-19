@@ -2,9 +2,7 @@
 using System;
 
 namespace Zeus.Tokens {
-
-  class Predicate : IWriteSql {
-
+  class Expression : IWriteSql {
     public void WriteSql(StringBuilder sql) {
       throw new NotImplementedException();
     }
