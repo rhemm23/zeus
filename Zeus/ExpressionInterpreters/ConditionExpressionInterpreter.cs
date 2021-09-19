@@ -83,6 +83,45 @@ namespace Zeus.ExpressionInterpreters {
       }
     }
 
+    private bool IsExpressionConstantNull(System.Linq.Expressions.Expression expression) {
+      switch (expression) {
+        case ConstantExpression constantExpression:
+          return constantExpression.Value == null;
+
+        case MemberExpression memberExpression:
+          Stack<MemberInfo> memberInfos = new Stack<MemberInfo>();
+          while (memberExpression.Expression is MemberExpression nextMemberExpression) {
+            memberInfos.Push(memberExpression.Member);
+            memberExpression = nextMemberExpression;
+          }
+          if (memberExpression.Expression is ConstantExpression rootConstantExpression) {
+            object currentValue = rootConstantExpression.Value;
+            if (currentValue == null) {
+              return true;
+            }
+            while(memberInfos.Count > 0) {
+              switch (memberInfos.Pop()) {
+                case FieldInfo fieldInfo:
+                  currentValue = fieldInfo.GetValue(currentValue);
+                  break;
+
+                case PropertyInfo propertyInfo:
+                  currentValue = propertyInfo.GetValue(currentValue);
+                  break;
+
+                default:
+                  return false;
+              }
+              if (currentValue == null) {
+                return true;
+              }
+            }
+          }
+          break;
+      }
+      return false;
+    }
+
     private SearchConditionWithoutMatch ParseBinaryExpression(BinaryExpression binaryExpression) {
       switch (binaryExpression.NodeType) {
         case ExpressionType.And:
@@ -102,6 +141,33 @@ namespace Zeus.ExpressionInterpreters {
           return new OrSearchConditionWithoutMatch(leftOrPredicate, rightOrPredicate);
 
         default:
+
+          bool isNullPredicate = false;
+          Tokens.Expression nullPredicateExpression = null;
+
+          if (this.IsExpressionConstantNull(binaryExpression.Left)) {
+            isNullPredicate = true;
+            nullPredicateExpression = this.ParseExpression(binaryExpression.Right);
+          } else if (this.IsExpressionConstantNull(binaryExpression.Right)) {
+            isNullPredicate = true;
+            nullPredicateExpression = this.ParseExpression(binaryExpression.Left);
+          }
+          if (isNullPredicate) {
+            switch (binaryExpression.NodeType) {
+              case ExpressionType.Equal:
+                return new SearchConditionWithoutMatch(
+                  new IsNullPredicate(nullPredicateExpression)
+                );
+
+              case ExpressionType.NotEqual:
+                return new SearchConditionWithoutMatch(
+                  new IsNotNullPredicate(nullPredicateExpression)
+                );
+
+              default:
+                throw new InvalidConditionExpressionException();
+            }
+          }
 
           Tokens.Expression leftExpression = this.ParseExpression(binaryExpression.Left);
           Tokens.Expression rightExpression = this.ParseExpression(binaryExpression.Right);

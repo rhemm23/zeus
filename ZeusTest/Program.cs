@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Zeus;
 
 namespace ZeusTest {
@@ -9,7 +10,13 @@ namespace ZeusTest {
 
     static void Main() {
       Database db = new Database(DB_CONN_STR);
-      var users = db.Select<User>().Where(x => x.FirstName == "john" && x.ID == 1).First();
+      var users = db.Select<User>().Where(x => x.FirstName == null && x.ID == 1).First();
+
+      Stopwatch sw = Stopwatch.StartNew();
+      var users2 = db.Select<User>().Where(x => x.LastName == "test" && x.ID == 4).First();
+      sw.Stop();
+
+      Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms");
 
       Console.ReadKey();
     }
