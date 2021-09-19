@@ -11,8 +11,15 @@ namespace Zeus.Tokens.Select {
 
     public SearchCondition Where { get; set; }
 
+    public Expression Top { get; set; }
+
     public void WriteSql(StringBuilder sql) {
       sql.Append("SELECT ");
+      if (this.Top != null) {
+        sql.Append("TOP (");
+        this.Top.WriteSql(sql);
+        sql.Append(") ");
+      }
       for (int i = 0; i < this.SelectItems.Count; i++) {
         if (i > 0) {
           sql.Append(", ");

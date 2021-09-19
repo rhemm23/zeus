@@ -13,6 +13,11 @@ namespace Zeus.Querys {
 
     public abstract SqlCommand GetSqlCommand();
 
+    public virtual T First() {
+      ObjectReader objectReader = new ObjectReader(this.GetDataReader(), typeof(T));
+      return (T)objectReader.ReadObject();
+    }
+
     public IEnumerable<T> All() {
       ObjectReader objectReader = new ObjectReader(this.GetDataReader(), typeof(T));
       foreach (object obj in objectReader.ReadAllObjects()) {

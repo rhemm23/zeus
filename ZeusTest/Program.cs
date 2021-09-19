@@ -9,12 +9,8 @@ namespace ZeusTest {
 
     static void Main() {
       Database db = new Database(DB_CONN_STR);
+      var users = db.Select<User>().Where(x => x.FirstName == "john" && x.ID == 1).First();
 
-      var users = db.Select<User>(user => user.ID, user => user.FirstName).Where(x => x.FirstName == "john" && x.ID == 1).All();
-
-      foreach (var user in users) {
-        Console.WriteLine(user.ID);
-      }
       Console.ReadKey();
     }
   }
