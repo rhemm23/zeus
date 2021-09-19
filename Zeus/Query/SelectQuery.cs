@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -23,9 +24,24 @@ namespace Zeus {
       this._connection.Close();
     }
 
+    public async Task<IEnumerable<T>> AllAsync() {
+      SqlDataReader dataReader = await this.GetDataReaderAsync();
+      ObjectReader objectReader = new ObjectReader(dataReader, typeof(T));
+
+      IEnumerable<T> objects = objectReader.ReadAllObjects().Select(obj => (T)obj);
+      this._connection.Close();
+
+      return objects;
+    }
+
     private SqlDataReader GetDataReader() {
       SqlCommand command = new SqlCommand(this.GetQuerySql(), this._connection);
       return command.ExecuteReader();
+    }
+
+    private Task<SqlDataReader> GetDataReaderAsync() {
+      SqlCommand command = new SqlCommand(this.GetQuerySql(), this._connection);
+      return command.ExecuteReaderAsync();
     }
 
     private string GetQuerySql() {
