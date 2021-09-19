@@ -44,7 +44,8 @@ namespace Zeus {
               columnDefinitions.Add(
                 new ColumnDefinition(
                   columnAttribute?.Name ?? propertyInfo.Name,
-                  InterpretDbTypeFromPropertyInfo(propertyInfo),
+                  columnAttribute?.DataType ?? InterpretDbTypeFromPropertyInfo(propertyInfo),
+                  columnAttribute?.IsPrimaryKey ?? false,
                   propertyInfo
                 )
               );

@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Zeus {
+namespace Zeus.Tokens {
 
   interface IWriteSql {
 
