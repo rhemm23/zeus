@@ -13,6 +13,15 @@ namespace Zeus {
       this._connectionString = connectionString;
     }
 
+    public bool Save<T>(T obj) {
+      if (this.DoesPrimaryKeyHaveValue<T>(obj)) {
+        throw new NotImplementedException();
+      } else {
+        InsertQuery<T> insertQuery = new InsertQuery<T>(this.GetNewConnection(), obj);
+        return insertQuery.Insert();
+      }
+    }
+
     public SelectQuery<T> Select<T>(params Expression<Func<T, object>>[] selectExpressions) {
       return new SelectQuery<T>(this.GetNewConnection(), selectExpressions);
     }
@@ -21,6 +30,40 @@ namespace Zeus {
       SqlConnection connection = new SqlConnection(this._connectionString);
       connection.Open();
       return connection;
+    }
+
+    private bool DoesPrimaryKeyHaveValue<T>(object obj) {
+      TableDefinition tableDefinition = TableDefinitionCache.GetTableDefinition(typeof(T));
+      object primaryKey = tableDefinition.PrimaryKey.PropertyInfo.GetValue(obj);
+
+      switch (primaryKey) {
+        case sbyte sb:
+          return sb > 0;
+
+        case byte b:
+          return b > 0;
+
+        case ushort us:
+          return us > 0;
+
+        case short s:
+          return s > 0;
+
+        case uint ui:
+          return ui > 0;
+
+        case int i:
+          return i > 0;
+
+        case ulong ul:
+          return ul > 0;
+
+        case long l:
+          return l > 0;
+
+        default:
+          return primaryKey != null;
+      }
     }
   }
 }

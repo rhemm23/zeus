@@ -29,6 +29,10 @@ namespace ZeusTest {
 
       sw.Stop();
 
+      var newUser = new User() { FirstName = "joe", LastName = "bill", IsVerified = false };
+
+      Debug.Assert(db.Save(newUser));
+
       Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms");
 
       Console.ReadKey();
@@ -48,7 +52,7 @@ namespace ZeusTest {
   [Table(Name = "users")]
   class User {
 
-    [Column(Name = "id")]
+    [Column(Name = "id", IsPrimaryKey = true)]
     public int ID { get; set; }
 
     [Column(Name = "first_name")]

@@ -15,7 +15,7 @@ namespace Zeus {
 
     public ColumnDefinition(string name, SqlDbType dbType, bool isPrimaryKey, PropertyInfo propertyInfo) {
       this.PropertyInfo = propertyInfo;
-      this.IsPrimaryKey = IsPrimaryKey;
+      this.IsPrimaryKey = isPrimaryKey;
       this.DbType = dbType;
       this.Name = name;
     }

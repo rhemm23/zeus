@@ -5,17 +5,19 @@ namespace Zeus.Queries {
 
   public abstract class Query<T> {
 
-    private SqlConnection _connection;
+    protected SqlConnection Connection { get; }
 
     public Query(SqlConnection connection) {
-      this._connection = connection;
+      this.Connection = connection;
     }
 
     public abstract SqlCommand GetSqlCommand();
 
     public virtual T First() {
       ObjectReader objectReader = new ObjectReader(this.GetDataReader(), typeof(T));
-      return (T)objectReader.ReadObject();
+      T result = (T)objectReader.ReadObject();
+      this.Connection.Close();
+      return result;
     }
 
     public IEnumerable<T> All() {
@@ -23,12 +25,12 @@ namespace Zeus.Queries {
       foreach (object obj in objectReader.ReadAllObjects()) {
         yield return (T)obj;
       }
-      this._connection.Close();
+      this.Connection.Close();
     }
 
-    private SqlDataReader GetDataReader() {
+    protected SqlDataReader GetDataReader() {
       SqlCommand command = this.GetSqlCommand();
-      command.Connection = this._connection;
+      command.Connection = this.Connection;
       return command.ExecuteReader();
     }
   }
