@@ -153,6 +153,17 @@ namespace Zeus.ExpressionInterpreters {
           switch (leftExpression) {
             case ColumnAccessExpressionTranslation leftColumnAccessExpressionTranslation:
               switch (rightExpression) {
+                case ConstantExpressionTranslation rightConstantExpressionTranslation:
+                  return new ConditionExpressionTranslation(
+                    new SearchConditionWithoutMatch(
+                      new ComparisonPredicate(
+                        this.MapOperator(binaryExpression.NodeType),
+                        this.GetColumnExpressionFromTranslation(leftColumnAccessExpressionTranslation),
+                        this._queryBuilder.AddParameter(rightConstantExpressionTranslation.Value)
+                      )
+                    )
+                  );
+
                 case ColumnAccessExpressionTranslation rightColumnAccessExpressionTranslation:
                   return new ConditionExpressionTranslation(
                     new SearchConditionWithoutMatch(
@@ -183,6 +194,23 @@ namespace Zeus.ExpressionInterpreters {
                     default:
                       throw new InvalidConditionExpressionException();
                   }
+
+                default:
+                  throw new InvalidConditionExpressionException();
+              }
+
+            case ConstantExpressionTranslation leftConstantExpressionTranslation:
+              switch (rightExpression) {
+                case ColumnAccessExpressionTranslation rightColumnAccessExpressionTranslation:
+                  return new ConditionExpressionTranslation(
+                    new SearchConditionWithoutMatch(
+                      new ComparisonPredicate(
+                        this.MapOperator(binaryExpression.NodeType),
+                        this.GetColumnExpressionFromTranslation(rightColumnAccessExpressionTranslation),
+                        this._queryBuilder.AddParameter(leftConstantExpressionTranslation.Value)
+                      )
+                    )
+                  );
 
                 default:
                   throw new InvalidConditionExpressionException();
