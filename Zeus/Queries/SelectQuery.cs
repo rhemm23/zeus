@@ -5,8 +5,8 @@ using System.Data.SqlClient;
 using Zeus.QueryBuilders;
 using Zeus.Tokens.Select;
 using Zeus.Tokens;
-using System;
 using System.Linq;
+using System;
 
 namespace Zeus.Queries {
 
@@ -27,6 +27,28 @@ namespace Zeus.Queries {
     public override T First() {
       this.Top(1);
       return base.First();
+    }
+
+    public SelectQuery<T> OrderByAsc(Expression<Func<T, object>> selectStatement) {
+      ColumnAccessExpressionInterpreter<T> expressionInterpreter = new ColumnAccessExpressionInterpreter<T>(this._selectQueryBuilder, selectStatement);
+      this._selectQueryBuilder.OrderByAsc(
+        new Tokens.Expressions.ColumnExpression(
+          this._selectQueryBuilder.GetTableAlias(typeof(T)),
+          expressionInterpreter.GetAccessedColumn().Name
+        )
+      );
+      return this;
+    }
+
+    public SelectQuery<T> OrderByDesc(Expression<Func<T, object>> selectStatement) {
+      ColumnAccessExpressionInterpreter<T> expressionInterpreter = new ColumnAccessExpressionInterpreter<T>(this._selectQueryBuilder, selectStatement);
+      this._selectQueryBuilder.OrderByDesc(
+        new Tokens.Expressions.ColumnExpression(
+          this._selectQueryBuilder.GetTableAlias(typeof(T)),
+          expressionInterpreter.GetAccessedColumn().Name
+        )
+      );
+      return this;
     }
 
     public SelectQuery<T> Where(Expression<Predicate<T>> condition) {
@@ -50,7 +72,7 @@ namespace Zeus.Queries {
         List<SelectItem> columnSelects = new List<SelectItem>();
         foreach (Expression<Func<T, object>> selectStatement in selectStatements) {
           ColumnAccessExpressionInterpreter<T> expressionInterpreter = new ColumnAccessExpressionInterpreter<T>(selectQueryBuilder, selectStatement);
-          columnSelects.Add(expressionInterpreter.GetSelectItem());
+          columnSelects.Add(new SelectColumn(tableAlias, expressionInterpreter.GetAccessedColumn().Name));
         }
         selectQueryBuilder.Select(columnSelects);
       }

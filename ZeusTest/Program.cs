@@ -10,14 +10,23 @@ namespace ZeusTest {
 
     static void Main() {
       Database db = new Database(DB_CONN_STR);
-      var users = db.Select<User>().Where(x => x.FirstName == null && x.ID == 1).First();
+      var users = db.Select<User>()
+        .Where(x => x.FirstName == null && x.ID == 1)
+        .OrderByDesc(x => x.ID)
+        .OrderByAsc(x => x.FirstName)
+        .First();
 
       Test test = new Test();
       test.Data = new Internal();
       test.Data.Data = "doe";
 
       Stopwatch sw = Stopwatch.StartNew();
-      var users2 = db.Select<User>().Where(x => x.IsVerified && x.ID == 1).First();
+      var users2 = db.Select<User>()
+        .Where(x => x.IsVerified && x.ID == 1)
+        .OrderByDesc(x => x.ID)
+        .OrderByAsc(x => x.FirstName)
+        .First();
+
       sw.Stop();
 
       Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms");

@@ -1,6 +1,5 @@
 ﻿using System.Linq.Expressions;
 using Zeus.QueryBuilders;
-using Zeus.Tokens.Select;
 using System.Reflection;
 using System;
 
@@ -16,7 +15,7 @@ namespace Zeus {
       this._queryBuilder = queryBuilder;
     }
 
-    public SelectItem GetSelectItem() {
+    public ColumnDefinition GetAccessedColumn() {
       Expression currentExpression = this._selectExpression.Body;
       while (currentExpression is UnaryExpression unaryExpression && unaryExpression.NodeType == ExpressionType.Convert) {
         currentExpression = unaryExpression.Operand;
@@ -24,7 +23,7 @@ namespace Zeus {
       if (currentExpression is MemberExpression memberExpression && memberExpression.Expression is ParameterExpression && memberExpression.Member is PropertyInfo propertyInfo) {
         TableDefinition tableDefinition = TableDefinitionCache.GetTableDefinition(typeof(T));
         if (tableDefinition.ColumnDefinitionsByPropertyInfo.TryGetValue(propertyInfo, out ColumnDefinition columnDefinition)) {
-          return new SelectColumn(this._queryBuilder.GetTableAlias(typeof(T)), columnDefinition.Name);
+          return columnDefinition;
         }
       }
       throw new InvalidSelectExpressionException(this._selectExpression);

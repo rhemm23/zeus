@@ -11,9 +11,21 @@ namespace Zeus.QueryBuilders {
   class SelectQueryBuilder : QueryBuilder {
 
     private SelectQuerySpecification _selectQuerySpecification;
+    private List<OrderByClause> _orderClauses;
 
     public SelectQueryBuilder(Type primaryTableType) : base(primaryTableType) {
       this._selectQuerySpecification = new SelectQuerySpecification();
+      this._orderClauses = new List<OrderByClause>();
+    }
+
+    public SelectQueryBuilder OrderByDesc(Expression expression) {
+      this._orderClauses.Add(new OrderByClause(expression, false));
+      return this;
+    }
+
+    public SelectQueryBuilder OrderByAsc(Expression expression) {
+      this._orderClauses.Add(new OrderByClause(expression, true));
+      return this;
     }
 
     public SelectQueryBuilder Top(Expression topExpression) {
@@ -45,7 +57,8 @@ namespace Zeus.QueryBuilders {
       SelectStatement selectStatement = new SelectStatement(
         new SelectQueryExpression(
           this._selectQuerySpecification
-        )
+        ),
+        this._orderClauses
       );
       StringBuilder sql = new StringBuilder();
       selectStatement.WriteSql(sql);
