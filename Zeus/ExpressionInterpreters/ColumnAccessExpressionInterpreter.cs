@@ -6,12 +6,12 @@ using System;
 
 namespace Zeus {
 
-  class SelectExpressionInterpreter<T> {
+  class ColumnAccessExpressionInterpreter<T> {
 
     private Expression<Func<T, object>> _selectExpression;
     private QueryBuilder _queryBuilder;
 
-    public SelectExpressionInterpreter(QueryBuilder queryBuilder, Expression<Func<T, object>> selectExpression) {
+    public ColumnAccessExpressionInterpreter(QueryBuilder queryBuilder, Expression<Func<T, object>> selectExpression) {
       this._selectExpression = selectExpression;
       this._queryBuilder = queryBuilder;
     }

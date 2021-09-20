@@ -49,7 +49,7 @@ namespace Zeus.Queries {
       if (selectStatements.Count() > 0) {
         List<SelectItem> columnSelects = new List<SelectItem>();
         foreach (Expression<Func<T, object>> selectStatement in selectStatements) {
-          SelectExpressionInterpreter<T> expressionInterpreter = new SelectExpressionInterpreter<T>(selectQueryBuilder, selectStatement);
+          ColumnAccessExpressionInterpreter<T> expressionInterpreter = new ColumnAccessExpressionInterpreter<T>(selectQueryBuilder, selectStatement);
           columnSelects.Add(expressionInterpreter.GetSelectItem());
         }
         selectQueryBuilder.Select(columnSelects);
