@@ -1,5 +1,5 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using System;
 using Zeus;
 
 namespace ZeusTest {
@@ -17,7 +17,7 @@ namespace ZeusTest {
       test.Data.Data = "doe";
 
       Stopwatch sw = Stopwatch.StartNew();
-      var users2 = db.Select<User>().Where(x => x.LastName == test.Data.Data && x.ID == 1).First();
+      var users2 = db.Select<User>().Where(x => x.IsVerified && x.ID == 1).First();
       sw.Stop();
 
       Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms");
@@ -50,5 +50,8 @@ namespace ZeusTest {
 
     [Column(Name = "username")]
     public string Username { get; set; }
+
+    [Column(Name = "is_verified")]
+    public bool IsVerified { get; set; }
   }
 }

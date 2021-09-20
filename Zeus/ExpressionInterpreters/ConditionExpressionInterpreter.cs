@@ -1,47 +1,17 @@
-﻿using Zeus.Tokens.SearchConditions;
+﻿using Zeus.ExpressionInterpreters.ExpressionTranslations;
+using Zeus.Tokens.SearchConditions;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Zeus.Tokens.Predicates;
 using Zeus.QueryBuilders;
 using System.Reflection;
 using Zeus.Exceptions;
+using System.Data;
 using System;
 
 namespace Zeus.ExpressionInterpreters {
 
   class ConditionExpressionInterpreter<T> {
-
-    private class ExpressionDescriptor {
-    
-      public enum DescriptorType {
-        Expression,
-        Condition,
-        Null
-      }
-
-      public Tokens.Expressions.Expression Expression { get; }
-
-      public SearchConditionWithoutMatch Condition { get; }
-
-      public bool IsBooleanAccess { get; }
-
-      public DescriptorType Type { get; }
-
-      public ExpressionDescriptor(Tokens.Expressions.Expression expression, bool isBooleanAccess) {
-        this.IsBooleanAccess = isBooleanAccess;
-        this.Type = DescriptorType.Expression;
-        this.Expression = expression;
-      }
-
-      public ExpressionDescriptor(SearchConditionWithoutMatch condition) {
-        this.Type = DescriptorType.Condition;
-        this.Condition = condition;
-      }
-
-      public ExpressionDescriptor() {
-        this.Type = DescriptorType.Null;
-      }
-    }
 
     private Expression<Predicate<T>> _condition;
     private QueryBuilder _queryBuilder;
@@ -51,23 +21,19 @@ namespace Zeus.ExpressionInterpreters {
       this._condition = condition;
     }
 
-    private ExpressionDescriptor ParseConstantExpression(ConstantExpression constantExpression) {
+    private ExpressionTranslation TranslateConstantExpression(ConstantExpression constantExpression) {
       if (constantExpression.Value == null) {
-        return new ExpressionDescriptor();
+        return new NullExpressionTranslation();
       } else {
-        return new ExpressionDescriptor(this._queryBuilder.AddParameter(constantExpression.Value), false);
+        return new ConstantExpressionTranslation(constantExpression.Value);
       }
     }
 
-    private ExpressionDescriptor ParseMemberAccessExpression(MemberExpression memberExpression) {
+    private ExpressionTranslation TranslateMemberAccessExpression(MemberExpression memberExpression) {
       if (memberExpression.Expression is ParameterExpression && memberExpression.Member is PropertyInfo propertyInfo) {
         TableDefinition tableDefinition = TableDefinitionCache.GetTableDefinition(typeof(T));
         if (tableDefinition.ColumnDefinitionsByPropertyInfo.TryGetValue(propertyInfo, out ColumnDefinition columnDefinition)) {
-          string tableAlias = this._queryBuilder.GetTableAlias(typeof(T));
-          return new ExpressionDescriptor(
-            new Tokens.Expressions.ColumnExpression(tableAlias, columnDefinition.Name),
-            propertyInfo.PropertyType == typeof(bool)
-          );
+          return new ColumnAccessExpressionTranslation(columnDefinition);
         }
       } else {
         MemberExpression currentExpression = memberExpression;
@@ -80,7 +46,7 @@ namespace Zeus.ExpressionInterpreters {
         if (currentExpression.Expression is ConstantExpression constantExpression) {
           object currentValue = constantExpression.Value;
           if (currentValue == null) {
-            return new ExpressionDescriptor();
+            return new NullExpressionTranslation();
           }
           while (memberInfos.Count > 0) {
             MemberInfo memberInfo = memberInfos.Pop();
@@ -97,42 +63,52 @@ namespace Zeus.ExpressionInterpreters {
                 throw new InvalidMemberAccessException();
             }
             if (currentValue == null) {
-              return new ExpressionDescriptor();
+              return new NullExpressionTranslation();
             }
           }
-          return new ExpressionDescriptor(this._queryBuilder.AddParameter(currentValue), false);
+          return new ConstantExpressionTranslation(currentValue);
         }
       }
       throw new InvalidMemberAccessException();
     }
 
-    private ExpressionDescriptor ParseExpression(Expression expression) {
+    private ExpressionTranslation TranslateExpression(Expression expression) {
       switch (expression) {
         case BinaryExpression binaryExpression:
           return this.ParseBinaryExpression(binaryExpression);
 
         case MemberExpression memberExpression:
-          return this.ParseMemberAccessExpression(memberExpression);
+          return this.TranslateMemberAccessExpression(memberExpression);
 
         case ConstantExpression constantExpression:
-          return this.ParseConstantExpression(constantExpression);
+          return this.TranslateConstantExpression(constantExpression);
 
         default:
           throw new InvalidConditionExpressionException();
       }
     }
 
-    private SearchConditionWithoutMatch ConvertExpressionDescriptorToCondition(ExpressionDescriptor expressionDescriptor) {
-      switch (expressionDescriptor.Type) {
-        case ExpressionDescriptor.DescriptorType.Condition:
-          return expressionDescriptor.Condition;
+    private Tokens.Expressions.ColumnExpression GetColumnExpressionFromTranslation(ColumnAccessExpressionTranslation columnAccessExpressionTranslation) {
+      return new Tokens.Expressions.ColumnExpression(
+        this._queryBuilder.GetTableAlias(typeof(T)),
+        columnAccessExpressionTranslation.ColumnDefinition.Name
+      );
+    }
 
-        case ExpressionDescriptor.DescriptorType.Expression:
-          if (expressionDescriptor.IsBooleanAccess) {
+    private SearchConditionWithoutMatch ConvertExpressionTranslationToCondition(ExpressionTranslation expressionDescriptor) {
+      switch (expressionDescriptor) {
+        case ConditionExpressionTranslation conditionExpressionTranslation:
+          return conditionExpressionTranslation.Condition;
+
+        case ColumnAccessExpressionTranslation columnAccessExpressionTranslation:
+          if (columnAccessExpressionTranslation.ColumnDefinition.DbType == SqlDbType.Bit) {
             return new SearchConditionWithoutMatch(
               new ComparisonPredicate(
                 ComparisonPredicate.Operator.Equal,
-                expressionDescriptor.Expression,
+                new Tokens.Expressions.ColumnExpression(
+                  this._queryBuilder.GetTableAlias(columnAccessExpressionTranslation.ColumnDefinition.PropertyInfo.DeclaringType),
+                  columnAccessExpressionTranslation.ColumnDefinition.Name
+                ),
                 this._queryBuilder.AddParameter(true)
               )
             );
@@ -145,73 +121,102 @@ namespace Zeus.ExpressionInterpreters {
       }
     }
 
-    private ExpressionDescriptor ParseBinaryExpression(BinaryExpression binaryExpression) {
+    private ExpressionTranslation ParseBinaryExpression(BinaryExpression binaryExpression) {
       switch (binaryExpression.NodeType) {
         case ExpressionType.And:
         case ExpressionType.AndAlso:
 
-          ExpressionDescriptor leftAndPredicate = this.ParseExpression(binaryExpression.Left);
-          ExpressionDescriptor rightAndPredicate = this.ParseExpression(binaryExpression.Right);
+          ExpressionTranslation leftAndPredicate = this.TranslateExpression(binaryExpression.Left);
+          ExpressionTranslation rightAndPredicate = this.TranslateExpression(binaryExpression.Right);
 
-          SearchConditionWithoutMatch leftAndCondition = this.ConvertExpressionDescriptorToCondition(leftAndPredicate);
-          SearchConditionWithoutMatch rightAndCondition = this.ConvertExpressionDescriptorToCondition(rightAndPredicate);
+          SearchConditionWithoutMatch leftAndCondition = this.ConvertExpressionTranslationToCondition(leftAndPredicate);
+          SearchConditionWithoutMatch rightAndCondition = this.ConvertExpressionTranslationToCondition(rightAndPredicate);
 
-          return new ExpressionDescriptor(new AndSearchConditionWithoutMatch(leftAndCondition, rightAndCondition));
+          return new ConditionExpressionTranslation(new AndSearchConditionWithoutMatch(leftAndCondition, rightAndCondition));
 
         case ExpressionType.Or:
         case ExpressionType.OrElse:
 
-          ExpressionDescriptor leftOrPredicate = this.ParseExpression(binaryExpression.Left);
-          ExpressionDescriptor rightOrPredicate = this.ParseExpression(binaryExpression.Right);
+          ExpressionTranslation leftOrPredicate = this.TranslateExpression(binaryExpression.Left);
+          ExpressionTranslation rightOrPredicate = this.TranslateExpression(binaryExpression.Right);
 
-          SearchConditionWithoutMatch leftOrCondition = this.ConvertExpressionDescriptorToCondition(leftOrPredicate);
-          SearchConditionWithoutMatch rightOrCondition = this.ConvertExpressionDescriptorToCondition(rightOrPredicate);
+          SearchConditionWithoutMatch leftOrCondition = this.ConvertExpressionTranslationToCondition(leftOrPredicate);
+          SearchConditionWithoutMatch rightOrCondition = this.ConvertExpressionTranslationToCondition(rightOrPredicate);
 
-          return new ExpressionDescriptor(new OrSearchConditionWithoutMatch(leftOrCondition, rightOrCondition));
+          return new ConditionExpressionTranslation(new OrSearchConditionWithoutMatch(leftOrCondition, rightOrCondition));
 
         default:
 
-          ExpressionDescriptor leftExpression = this.ParseExpression(binaryExpression.Left);
-          ExpressionDescriptor rightExpression = this.ParseExpression(binaryExpression.Right);
+          ExpressionTranslation leftExpression = this.TranslateExpression(binaryExpression.Left);
+          ExpressionTranslation rightExpression = this.TranslateExpression(binaryExpression.Right);
 
-          Predicate predicate;
+          switch (leftExpression) {
+            case ColumnAccessExpressionTranslation leftColumnAccessExpressionTranslation:
+              switch (rightExpression) {
+                case ColumnAccessExpressionTranslation rightColumnAccessExpressionTranslation:
+                  return new ConditionExpressionTranslation(
+                    new SearchConditionWithoutMatch(
+                      new ComparisonPredicate(
+                        this.MapOperator(binaryExpression.NodeType),
+                        this.GetColumnExpressionFromTranslation(leftColumnAccessExpressionTranslation),
+                        this.GetColumnExpressionFromTranslation(rightColumnAccessExpressionTranslation)
+                      )
+                    )
+                  );
 
-          if (leftExpression.Type == ExpressionDescriptor.DescriptorType.Expression && rightExpression.Type == ExpressionDescriptor.DescriptorType.Expression) {
-            predicate = new ComparisonPredicate(
-              this.MapOperator(binaryExpression.NodeType),
-              leftExpression.Expression,
-              rightExpression.Expression
-            );
-          } else if (leftExpression.Type == ExpressionDescriptor.DescriptorType.Null && rightExpression.Type == ExpressionDescriptor.DescriptorType.Expression) {
-            switch (binaryExpression.NodeType) {
-              case ExpressionType.Equal:
-                predicate = new IsNullPredicate(rightExpression.Expression);
-                break;
+                case NullExpressionTranslation _:
+                  switch (binaryExpression.NodeType) {
+                    case ExpressionType.Equal:
+                      return new ConditionExpressionTranslation(
+                        new SearchConditionWithoutMatch(
+                          new IsNullPredicate(this.GetColumnExpressionFromTranslation(leftColumnAccessExpressionTranslation))
+                        )
+                      );
 
-              case ExpressionType.NotEqual:
-                predicate = new IsNotNullPredicate(rightExpression.Expression);
-                break;
+                    case ExpressionType.NotEqual:
+                      return new ConditionExpressionTranslation(
+                        new SearchConditionWithoutMatch(
+                          new IsNotNullPredicate(this.GetColumnExpressionFromTranslation(leftColumnAccessExpressionTranslation))
+                        )
+                      );
 
-              default:
-                throw new InvalidBinaryOperatorException();
-            }
-          } else if (leftExpression.Type == ExpressionDescriptor.DescriptorType.Expression && rightExpression.Type == ExpressionDescriptor.DescriptorType.Null) {
-            switch (binaryExpression.NodeType) {
-              case ExpressionType.Equal:
-                predicate = new IsNullPredicate(leftExpression.Expression);
-                break;
+                    default:
+                      throw new InvalidConditionExpressionException();
+                  }
 
-              case ExpressionType.NotEqual:
-                predicate = new IsNotNullPredicate(leftExpression.Expression);
-                break;
+                default:
+                  throw new InvalidConditionExpressionException();
+              }
 
-              default:
-                throw new InvalidBinaryOperatorException();
-            }
-          } else {
-            throw new InvalidBinaryOperatorException();
+            case NullExpressionTranslation _:
+              switch (rightExpression) {
+                case ColumnAccessExpressionTranslation rightColumnAccessExpressionTranslation:
+                  switch (binaryExpression.NodeType) {
+                    case ExpressionType.Equal:
+                      return new ConditionExpressionTranslation(
+                        new SearchConditionWithoutMatch(
+                          new IsNullPredicate(this.GetColumnExpressionFromTranslation(rightColumnAccessExpressionTranslation))
+                        )
+                      );
+
+                    case ExpressionType.NotEqual:
+                      return new ConditionExpressionTranslation(
+                        new SearchConditionWithoutMatch(
+                          new IsNotNullPredicate(this.GetColumnExpressionFromTranslation(rightColumnAccessExpressionTranslation))
+                        )
+                      );
+
+                    default:
+                      throw new InvalidConditionExpressionException();
+                  }
+
+                default:
+                  throw new InvalidConditionExpressionException();
+              }
+
+            default:
+              throw new InvalidConditionExpressionException();
           }
-          return new ExpressionDescriptor(new SearchConditionWithoutMatch(predicate));
       }
     }
 
@@ -241,8 +246,8 @@ namespace Zeus.ExpressionInterpreters {
     }
 
     public SearchCondition GetSearchCondition() {
-      ExpressionDescriptor expressionDescriptor = this.ParseExpression(this._condition.Body);
-      return new SearchCondition(this.ConvertExpressionDescriptorToCondition(expressionDescriptor));
+      ExpressionTranslation expressionTranslation = this.TranslateExpression(this._condition.Body);
+      return new SearchCondition(this.ConvertExpressionTranslationToCondition(expressionTranslation));
     }
   }
 }
