@@ -15,7 +15,8 @@ namespace Zeus {
 
     public bool Save<T>(T obj) {
       if (this.DoesPrimaryKeyHaveValue<T>(obj)) {
-        throw new NotImplementedException();
+        UpdateQuery<T> updateQuery = new UpdateQuery<T>(this.GetNewConnection(), obj);
+        return updateQuery.Update();
       } else {
         InsertQuery<T> insertQuery = new InsertQuery<T>(this.GetNewConnection(), obj);
         return insertQuery.Insert();

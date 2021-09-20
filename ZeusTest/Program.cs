@@ -29,9 +29,9 @@ namespace ZeusTest {
 
       sw.Stop();
 
-      var newUser = new User() { FirstName = "joe", LastName = "bill", IsVerified = false };
+      users2.FirstName = "test_test_test";
 
-      Debug.Assert(db.Save(newUser));
+      Debug.Assert(db.Save(users2));
 
       Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms");
 

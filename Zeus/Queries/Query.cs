@@ -33,5 +33,11 @@ namespace Zeus.Queries {
       command.Connection = this.Connection;
       return command.ExecuteReader();
     }
+
+    protected int ExecuteNonQuery() {
+      SqlCommand command = this.GetSqlCommand();
+      command.Connection = this.Connection;
+      return command.ExecuteNonQuery();
+    }
   }
 }
