@@ -2,6 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/rhemm23/zeus</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/rhemm23/zeus</RepositoryUrl>
+    <Description>Simple C# Sql ORM</Description>
+    <Authors>Ryan Hemmila</Authors>
+    <Company />
+    <PackageId>ZeusORM</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
