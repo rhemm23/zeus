@@ -29,9 +29,7 @@ namespace ZeusTest {
 
       sw.Stop();
 
-      users2.FirstName = "test_test_test";
-
-      Debug.Assert(db.Save(users2));
+      Console.WriteLine(db.Delete(users2));
 
       Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms");
 

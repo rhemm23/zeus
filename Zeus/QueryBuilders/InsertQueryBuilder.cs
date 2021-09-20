@@ -14,7 +14,6 @@ namespace Zeus.QueryBuilders {
     }
 
     public override string GetSql() {
-
       TableDefinition tableDefinition = TableDefinitionCache.GetTableDefinition(this.PrimaryTableType);
       StringBuilder sql = new StringBuilder();
 

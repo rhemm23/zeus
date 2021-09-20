@@ -13,6 +13,11 @@ namespace Zeus {
       this._connectionString = connectionString;
     }
 
+    public bool Delete<T>(T obj) {
+      DeleteQuery<T> deleteQuery = new DeleteQuery<T>(this.GetNewConnection(), obj);
+      return deleteQuery.Delete();
+    }
+
     public bool Save<T>(T obj) {
       if (this.DoesPrimaryKeyHaveValue<T>(obj)) {
         UpdateQuery<T> updateQuery = new UpdateQuery<T>(this.GetNewConnection(), obj);
