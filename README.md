@@ -4,7 +4,7 @@ Zeus is a simple Sql ORM for C#
 
 To use, first define a data class
 
-```
+```csharp
 [Table(Name = "dogs")]
 public class Dog {
 
@@ -34,7 +34,7 @@ It can also be used to define if a property is a primary key, and at least one p
 
 The ignore attribute can be used to exclude public properties from being treated as columns.
 
-```
+```csharp
 public static void Main() {
   Database db = new Database("...connection string...");
   
