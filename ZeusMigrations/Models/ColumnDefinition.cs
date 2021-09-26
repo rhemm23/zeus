@@ -1,10 +1,6 @@
-﻿using System.Data;
-
-namespace ZeusMigrations.Models {
+﻿namespace ZeusMigrations.Models {
 
   public class ColumnDefinition {
-
-    public bool IsNotNull { get; set; }
 
     private SqlDataType _dataType;
     private string _columnName;
@@ -12,6 +8,10 @@ namespace ZeusMigrations.Models {
     public ColumnDefinition(string columnName, SqlDataType dataType) {
       this._columnName = columnName;
       this._dataType = dataType;
+    }
+
+    public override string ToString() {
+      return $"{this._columnName} {this._dataType}";
     }
   }
 }
