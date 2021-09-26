@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Data.SqlClient;
 using ZeusMigrations.Models;
 using System.Text;
+using System;
 
 namespace ZeusMigrations.Actions {
 
@@ -22,7 +22,7 @@ namespace ZeusMigrations.Actions {
       this._columns = columns;
     }
 
-    public void Up(SqlConnection connection) {
+    public string GetUpQuery() {
       StringBuilder sql = new StringBuilder("CREATE TABLE ");
       if (this._schemaName == null) {
         sql.Append(this._tableName);
@@ -38,16 +38,19 @@ namespace ZeusMigrations.Actions {
         sql.Append("\n");
       }
       sql.Append(");");
-      using (SqlCommand command = new SqlCommand(sql.ToString(), connection)) {
-        command.ExecuteNonQuery();
-      }
+      return sql.ToString();
     }
 
-    public void Down(SqlConnection connection) {
-      string query = $"DROP TABLE {this._tableName};";
-      using (SqlCommand command = new SqlCommand(query, connection)) {
-        command.ExecuteNonQuery();
-      }
+    public string GetDownQuery() {
+      return $"DROP TABLE {this._tableName};";
+    }
+
+    public void PrintUpDescription() {
+      Console.WriteLine($"Creating table {this._tableName}");
+    }
+
+    public void PrintDownDescription() {
+      Console.WriteLine($"Dropping table {this._tableName}");
     }
   }
 }

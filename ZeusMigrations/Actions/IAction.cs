@@ -1,11 +1,13 @@
-﻿using System.Data.SqlClient;
-
-namespace ZeusMigrations.Actions {
+﻿namespace ZeusMigrations.Actions {
 
   public interface IAction {
 
-    void Up(SqlConnection connection);
+    string GetUpQuery();
 
-    void Down(SqlConnection connection);
+    string GetDownQuery();
+
+    void PrintUpDescription();
+
+    void PrintDownDescription();
   }
 }
